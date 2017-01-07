@@ -7,6 +7,25 @@ require 'twitter'
 require 'em-websocket'
 require 'gibbon'
 
+def ordinal(number)
+  abs_number = number.to_i.abs
+
+  if (11..13).include?(abs_number % 100)
+    "th"
+  else
+    case abs_number % 10
+    when 1; "st"
+    when 2; "nd"
+    when 3; "rd"
+    else    "th"
+    end
+  end
+end
+
+def ordinalize(number)
+  "#{number}#{ordinal(number)}"
+end
+
 key = YAML.load_file(File.join(__dir__, 'key.yml'))
 
 client = Twitter::REST::Client.new do |config|
@@ -42,20 +61,22 @@ EM.run {
       songkick_time = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['start']['time']
       songkick_url = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['uri']
 
-      followers = {
+      songkick_day = ordinalize(Time.parse(songkick_date).strftime("%e"))
+
+      api_data = {
         :spotify => spotify_followers,
         :soundcloud => soundcloud_followers,
         :facebook => facebook_likes,
         :twitter => twitter_followers,
         :mailchimp => mailchimp_subscribers,
-        :date => Time.parse(songkick_date).strftime("%b %e, %Y: "),
+        :date => Time.parse(songkick_date).strftime("%b #{songkick_day}, %Y: "),
         :venue => songkick_venue,
         :location => ", " + songkick_location + ". ",
-        :time => "Doors: " + Time.parse(songkick_time).strftime("%H%M") + ".",
+        :time => "Doors: " + Time.parse(songkick_time).strftime("%l:%M%P") + ".",
         :link => songkick_url
       }
 
-      ws.send followers.to_json
+      ws.send api_data.to_json
     }
   end
 }
