@@ -55,13 +55,17 @@ EM.run {
       mailchimp_subscribers = gibbon.lists(key['ochre_list']).retrieve['stats']['member_count']
 
       songkick_api = Net::HTTP.get(URI('http://api.songkick.com/api/3.0/artists/48552/calendar.json?apikey=' + key['songkick']))
-      songkick_date = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['start']['date']
-      songkick_venue = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['venue']['displayName']
-      songkick_location = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['location']['city']
-      songkick_time = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['start']['time']
-      songkick_url = JSON.parse(songkick_api)['resultsPage']['results']['event'][0]['uri']
-
-      songkick_day = ordinalize(Time.parse(songkick_date).strftime("%e"))
+      songkick_event = JSON.parse(songkick_api)['resultsPage']['results']['event']
+      songkick_list = []
+      songkick_event.each do |event|
+        songkick_day = ordinalize(Time.parse(event['start']['date']).strftime("%e"))
+        event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y: ")
+        event[:venue] = event['venue']['displayName']
+        event[:location] = ", " + event['location']['city'] + ". "
+        event[:time] = "Doors: " + Time.parse(event['start']['time']).strftime("%l:%M%P") + "."
+        event[:link] = event['uri']
+        songkick_list.push(event) # Once each event is complete, add it to the array.
+      end
 
       api_data = {
         :spotify => spotify_followers,
@@ -69,11 +73,7 @@ EM.run {
         :facebook => facebook_likes,
         :twitter => twitter_followers,
         :mailchimp => mailchimp_subscribers,
-        :date => Time.parse(songkick_date).strftime("%b #{songkick_day}, %Y: "),
-        :venue => songkick_venue,
-        :location => ", " + songkick_location + ". ",
-        :time => "Doors: " + Time.parse(songkick_time).strftime("%l:%M%P") + ".",
-        :link => songkick_url
+        :songkick => songkick_list
       }
 
       ws.send api_data.to_json
