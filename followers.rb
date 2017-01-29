@@ -55,16 +55,19 @@ EM.run {
       mailchimp_subscribers = gibbon.lists(key['ochre_list']).retrieve['stats']['member_count']
 
       songkick_api = Net::HTTP.get(URI('http://api.songkick.com/api/3.0/artists/48552/calendar.json?apikey=' + key['songkick']))
-      songkick_event = JSON.parse(songkick_api)['resultsPage']['results']['event']
+
       songkick_list = []
-      songkick_event.each do |event|
-        songkick_day = ordinalize(Time.parse(event['start']['date']).strftime("%e"))
-        event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y: ")
-        event[:venue] = event['venue']['displayName']
-        event[:location] = ", " + event['location']['city'] + ". "
-        event[:time] = "Doors: " + Time.parse(event['start']['time']).strftime("%l:%M%P") + "."
-        event[:link] = event['uri']
-        songkick_list.push(event) # Once each event is complete, add it to the array.
+      unless JSON.parse(songkick_api)['resultsPage']['totalEntries'] == 0
+        songkick_event = JSON.parse(songkick_api)['resultsPage']['results']['event']
+        songkick_event.each do |event|
+          songkick_day = ordinalize(Time.parse(event['start']['date']).strftime("%e"))
+          event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y: ")
+          event[:venue] = event['venue']['displayName']
+          event[:location] = ", " + event['location']['city'] + ". "
+          event[:time] = "Doors: " + Time.parse(event['start']['time']).strftime("%l:%M%P") + "."
+          event[:link] = event['uri']
+          songkick_list.push(event) # Once each event is complete, add it to the array.
+        end
       end
 
       api_data = {
