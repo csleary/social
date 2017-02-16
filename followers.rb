@@ -5,7 +5,6 @@ require 'net/http'
 require 'json'
 require 'twitter'
 require 'em-websocket'
-require 'gibbon'
 
 def ordinal(number)
   abs_number = number.to_i.abs
@@ -35,8 +34,6 @@ client = Twitter::REST::Client.new do |config|
   config.access_token_secret = key['twitter']['access_token_secret']
 end
 
-gibbon = Gibbon::Request.new(api_key: key['mailchimp'])
-
 EM.run {
   EM::WebSocket.run(:host => "0.0.0.0", :port => 8081) do |ws|
     ws.onopen { |handshake|
@@ -47,12 +44,13 @@ EM.run {
       soundcloud = Net::HTTP.get(URI('https://api.soundcloud.com/users/ochre?consumer_key=' + key['soundcloud']))
       soundcloud_followers = JSON.parse(soundcloud)['followers_count']
 
-      fb = Net::HTTP.get(URI('https://graph.facebook.com/v2.8/190149549210?fields=fan_count&access_token=' + key['facebook']))
-      facebook_likes = JSON.parse(fb)['fan_count']
+      facebook = Net::HTTP.get(URI('https://graph.facebook.com/v2.8/190149549210?fields=fan_count&access_token=' + key['facebook']))
+      facebook_likes = JSON.parse(facebook)['fan_count']
 
       twitter_followers = client.user('ochremusic').followers_count
 
-      mailchimp_subscribers = gibbon.lists(key['ochre_list']).retrieve['stats']['member_count']
+      mailchimp = Net::HTTP.get(URI('https://us2.api.mailchimp.com/3.0/lists/356ce80316/?apikey=' + key['mailchimp']))
+      mailchimp_subscribers = JSON.parse(mailchimp)['stats']['member_count']
 
       songkick_api = Net::HTTP.get(URI('http://api.songkick.com/api/3.0/artists/48552/calendar.json?apikey=' + key['songkick']))
 
