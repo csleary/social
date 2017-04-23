@@ -38,19 +38,35 @@ EM.run {
   EM::WebSocket.run(:host => "0.0.0.0", :port => 8081) do |ws|
     ws.onopen { |handshake|
 
-      spotify = Net::HTTP.get(URI('https://api.spotify.com/v1/artists/0OmHDBh5styCXDWKwz58Ts'))
-      spotify_followers = JSON.parse(spotify)['followers']['total']
+      spotify = Net::HTTP.get_response(URI('https://api.spotify.com/v1/artists/0OmHDBh5styCXDWKwz58Ts'))
+      if spotify.kind_of? Net::HTTPSuccess
+        spotify_followers = JSON.parse(spotify.body)['followers']['total']
+      else
+        spotify_followers = "E#{spotify.code}"
+      end
 
-      soundcloud = Net::HTTP.get(URI('https://api.soundcloud.com/users/ochre?consumer_key=' + key['soundcloud']))
-      soundcloud_followers = JSON.parse(soundcloud)['followers_count']
+      soundcloud = Net::HTTP.get_response(URI('https://api.soundcloud.com/users/ochre?consumer_key=' + key['soundcloud']))
+      if soundcloud.kind_of? Net::HTTPSuccess
+        soundcloud_followers = JSON.parse(soundcloud.body)['followers_count']
+      else
+        soundcloud_followers = "E#{soundcloud.code}"
+      end
 
-      facebook = Net::HTTP.get(URI('https://graph.facebook.com/v2.8/190149549210?fields=fan_count&access_token=' + key['facebook']))
-      facebook_likes = JSON.parse(facebook)['fan_count']
+      facebook = Net::HTTP.get_response(URI('https://graph.facebook.com/v2.8/190149549210?fields=fan_count&access_token=' + key['facebook']))
+      if facebook.kind_of? Net::HTTPSuccess
+        facebook_likes = JSON.parse(facebook.body)['fan_count']
+      else
+        facebook_likes = "E#{facebook.code}"
+      end
 
       twitter_followers = client.user('ochremusic').followers_count
 
-      mailchimp = Net::HTTP.get(URI('https://us2.api.mailchimp.com/3.0/lists/356ce80316/?apikey=' + key['mailchimp']))
-      mailchimp_subscribers = JSON.parse(mailchimp)['stats']['member_count']
+      mailchimp = Net::HTTP.get_response(URI('https://us2.api.mailchimp.com/3.0/lists/356ce80316/?apikey=' + key['mailchimp']))
+      if mailchimp.kind_of? Net::HTTPSuccess
+        mailchimp_subscribers = JSON.parse(mailchimp.body)['stats']['member_count']
+      else
+        mailchimp_subscribers = "E#{mailchimp.code}"
+      end
 
       songkick_api = Net::HTTP.get(URI('http://api.songkick.com/api/3.0/artists/48552/calendar.json?apikey=' + key['songkick']))
 
