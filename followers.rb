@@ -68,19 +68,37 @@ EM.run {
         mailchimp_subscribers = "E#{mailchimp.code}"
       end
 
-      songkick_api = Net::HTTP.get(URI('http://api.songkick.com/api/3.0/artists/48552/calendar.json?apikey=' + key['songkick']))
+      songkick_api = Net::HTTP.get_response(URI('http://api.songkick.com/api/3.0/artists/48552/calendar.json?apikey=' + key['songkick']))
 
       songkick_list = []
-      unless JSON.parse(songkick_api)['resultsPage']['totalEntries'] == 0
-        songkick_event = JSON.parse(songkick_api)['resultsPage']['results']['event']
-        songkick_event.each do |event|
-          songkick_day = ordinalize(Time.parse(event['start']['date']).strftime("%e"))
-          event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y: ")
-          event[:venue] = event['venue']['displayName']
-          event[:location] = ", " + event['location']['city'] + ". "
-          event[:time] = "Doors: " + Time.parse(event['start']['time']).strftime("%l:%M%P") + "."
-          event[:link] = event['uri']
-          songkick_list.push(event) # Once each event is complete, add it to the array.
+      if songkick_api.kind_of? Net::HTTPSuccess
+        unless JSON.parse(songkick_api.body)['resultsPage']['totalEntries'] == 0
+          songkick_event = JSON.parse(songkick_api.body)['resultsPage']['results']['event']
+          songkick_event.each do |event|
+            songkick_day = ordinalize(Time.parse(event['start']['date']).strftime("%e"))
+            event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y: ")
+
+            if event['type'] == "Festival"
+              event[:venue] = event['displayName']
+            else
+              event[:venue] = event['venue']['displayName']
+            end
+
+            if event['location']['city'].nil?
+              event[:location] = ", " + "TBA" + ". "
+            else
+              event[:location] = ", " + event['location']['city'] + ". "
+            end
+
+            if event['start']['time'].nil?
+              event[:time] = "Doors: " + "TBA" + ". "
+            else
+              event[:time] = "Doors: " + Time.parse(event['start']['time']).strftime("%l:%M%P") + "."
+            end
+
+            event[:link] = event['uri']
+            songkick_list.push(event) # Once each event is complete, add it to the array.
+          end
         end
       end
 
