@@ -38,7 +38,26 @@ EM.run {
   EM::WebSocket.run(:host => "0.0.0.0", :port => 8081) do |ws|
     ws.onopen { |handshake|
 
-      spotify = Net::HTTP.get_response(URI('https://api.spotify.com/v1/artists/0OmHDBh5styCXDWKwz58Ts'))
+      spotify_auth_uri = URI('https://accounts.spotify.com/api/token?grant_type=client_credentials')
+
+      spotify_auth = Net::HTTP::Post.new(spotify_auth_uri)
+      spotify_auth.basic_auth(key['spotify']['client_id'], key['spotify']['client_secret'])
+      spotify_auth['Content-Type'] = 'application/x-www-form-urlencoded'
+
+      spotify_auth_response = Net::HTTP.start(spotify_auth_uri.hostname, spotify_auth_uri.port, :use_ssl => true) { |http|
+        http.request(spotify_auth)
+      }
+      spotify_token = JSON.parse(spotify_auth_response.body)['access_token']
+
+      spotify_request_uri = URI('https://api.spotify.com/v1/artists/0OmHDBh5styCXDWKwz58Ts')
+
+      spotify_request = Net::HTTP::Get.new(spotify_request_uri)
+      spotify_request['Authorization'] = "Bearer #{spotify_token}"
+
+      spotify = Net::HTTP.start(spotify_request_uri.hostname, spotify_request_uri.port, :use_ssl => true) { |http|
+        http.request(spotify_request)
+      }
+
       if spotify.kind_of? Net::HTTPSuccess
         spotify_followers = JSON.parse(spotify.body)['followers']['total']
       else
@@ -76,7 +95,7 @@ EM.run {
           songkick_event = JSON.parse(songkick_api.body)['resultsPage']['results']['event']
           songkick_event.each do |event|
             songkick_day = ordinalize(Time.parse(event['start']['date']).strftime("%e"))
-            event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y: ")
+            event[:date] = Time.parse(event['start']['date']).strftime("%b #{songkick_day}, %Y")
 
             if event['type'] == "Festival"
               event[:venue] = event['displayName']
@@ -85,9 +104,9 @@ EM.run {
             end
 
             if event['location']['city'].nil?
-              event[:location] = ", " + "TBA" + ". "
+              event[:location] = "TBA. "
             else
-              event[:location] = ", " + event['location']['city'] + ". "
+              event[:location] = event['location']['city'] + ". "
             end
 
             if event['start']['time'].nil?
