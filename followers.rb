@@ -169,7 +169,7 @@ EM.run do
       if redis.get('facebook_key').nil?
         facebook = { service: 'facebook', likes: followers.facebook }.to_json
         redis.set 'facebook_key', facebook
-        redis.expire 'facebook_key', 600
+        redis.expire 'facebook_key', 300
       else
         facebook = redis.get 'facebook_key'
       end
@@ -181,7 +181,7 @@ EM.run do
           subscribers: followers.mailchimp
         }.to_json
         redis.set 'mailchimp_key', mailchimp
-        redis.expire 'mailchimp_key', 600
+        redis.expire 'mailchimp_key', 300
       else
         mailchimp = redis.get 'mailchimp_key'
       end
@@ -190,7 +190,7 @@ EM.run do
       if redis.get('songkick_key').nil?
         songkick = { service: 'songkick', gigs: followers.songkick }.to_json
         redis.set 'songkick_key', songkick
-        redis.expire 'songkick_key', 600
+        redis.expire 'songkick_key', 300
       else
         songkick = redis.get 'songkick_key'
       end
@@ -202,7 +202,7 @@ EM.run do
           followers: followers.soundcloud
         }.to_json
         redis.set 'soundcloud_key', soundcloud
-        redis.expire 'soundcloud_key', 600
+        redis.expire 'soundcloud_key', 300
       else
         soundcloud = redis.get 'soundcloud_key'
       end
@@ -211,7 +211,7 @@ EM.run do
       if redis.get('spotify_key').nil?
         spotify = { service: 'spotify', followers: followers.spotify }.to_json
         redis.set 'spotify_key', spotify
-        redis.expire 'spotify_key', 600
+        redis.expire 'spotify_key', 300
       else
         spotify = redis.get 'spotify_key'
       end
@@ -221,7 +221,7 @@ EM.run do
         twitter_followers = client.user('ochremusic').followers_count
         twitter = { service: 'twitter', followers: twitter_followers }.to_json
         redis.set 'twitter_key', twitter
-        redis.expire 'twitter_key', 600
+        redis.expire 'twitter_key', 300
       else
         twitter = redis.get 'twitter_key'
       end
